@@ -4,7 +4,7 @@ import logging
 from .qsub_to_embeddings import count_lines
 
 SGE_TMEM = "16G"
-SGE_H_RT = "8:0:0"
+SGE_H_RT = "12:0:0"
 SGE_JOB_NAME = "emma-prep"
 
 logging.basicConfig(
@@ -73,5 +73,7 @@ mkdir -p ${{DATADIR}}/${{PROJECT}}/starting_clusters/${{PROJECT}}
 echo ${{PROJECT}} > ${{DATADIR}}/${{PROJECT}}/projects.txt
 
 cath-emma-cli create-starting-clusters-from-centroids --cluster_reps_file ${{DATADIR}}/${{PROJECT}}/${{PROJECT}}_reps.csv --starting_clusters_dir ${{DATADIR}}/${{PROJECT}}/starting_clusters/${{PROJECT}} --cluster_mapping_file ${{DATADIR}}/${{PROJECT}}/${{PROJECT}}_cluster_mapping.tsv
+echo `date` ${{PROJECT}} END
             """)
+
     LOG.info(f"Generated qsub script for embeddings generation -> {output_script.name}")

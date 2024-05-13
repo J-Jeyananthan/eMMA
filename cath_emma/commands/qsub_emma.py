@@ -36,7 +36,6 @@ LOG = logging.getLogger(__name__)
 @click.option(
     "--distance_matrix",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
-    required=True,
     help="Path to distance file (either embeddings or Foldseek based)"
 )
 @click.option(
@@ -70,20 +69,22 @@ def qsub_emma_input_to_emma_output(mda_list,sfam_path,plenv_path,distance_matrix
 #$ -N {SGE_JOB_NAME}
 #$ -cwd
 #$ -P cath
+#$ -e /dev/null
+#$ -o /dev/null
 #$ -t 1-{line_count}
+source ~/.bash_profile
 PROJECT=$(head -n $SGE_TASK_ID {os.path.abspath(mda_list.name)} | tail -n 1)\n\
 export DATADIR='{sfam_path}'
 export CODE_DIR='{code_dir}'
 echo $(date) ${{PROJECT}} START
 
-# Swap for embeddings location file once added as an option to perl GeMMA. Switch distance matrix required to True.
+cd  ${{DATADIR}}/${{PROJECT}}
 
 {plenv_path}/perl ${{CODE_DIR}}/Cath-Gemma/script/prepare_research_data.pl \\
     --local \\
-    --projects-list-file ${{DATADIR}}/${{PROJECT}}/projects.txt \\
-    --output-root-dir ${{DATADIR}}/${{PROJECT}} \\
-    --tmp-dir /dev/shm/ \\
-    --embs-file ${{DATADIR}}/${{PROJECT}}/${{PROJECT}}{matrix_suffix}
+    --projects-list-file projects.txt \\
+    --output-root-dir . \\
+    --embs-file ${{DATADIR}}/${{PROJECT}}/${{PROJECT}}{matrix_suffix} \\
     1> ${{DATADIR}}/${{PROJECT}}/${{PROJECT}}.stdout \\
     2> ${{DATADIR}}/${{PROJECT}}/${{PROJECT}}.stderr
 
