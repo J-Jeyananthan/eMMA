@@ -269,7 +269,7 @@ sub _embedding_scan_impl {
 			my $dist_num = 0;
 			for my $match_protid (@match_protids) {
 				for my $query_protid (@query_protids) {
-					$dist_sum += $dist_scores_by_query_match{$query_protid}{$match_protid};
+					$dist_sum += $dist_scores_by_query_match{$query_protid}{$match_protid} || 0;
 					$dist_num += 1
 				}
 			}
