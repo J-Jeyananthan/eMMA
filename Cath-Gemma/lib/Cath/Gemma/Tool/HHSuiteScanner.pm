@@ -158,15 +158,22 @@ sub hhsuite_scan {
 	return $result;
 }
 
-=head2 _read_ids_from_column
+=head2 _read_ids_from_profile_file
 
-Function to extract the match/query id from file with the given column number
+Function to extract the match/query id from a3m profile file
 
-Returns List of ids
+	$ head 3.40.50.620/profiles/3.40.50.620/working_42.hhconsensus.a3m
+	#working_42
+	>working_42 _consensus
+	NHAGRIQNLKLGENEHGPVVYWMSRDHRSR...
+	>A9SFA1/11-153
+	NHAGRIQNLKLGENEHGPVVYWMSRDHRSR...
+
+Returns list of ids
 
 =cut
 
-sub _read_ids_from_column {
+sub _read_ids_from_profile_file {
 	state $check = compile( Path, Int );
 	my ( $file, $col_num ) = $check->( @ARG );
 
@@ -174,28 +181,13 @@ sub _read_ids_from_column {
 	open(my $fh, "<", $file)
 		or die "cannot open $file";
 	while (my $line = <$fh>) {
-		chomp($line);
-		my @cols = split(/\s+/, $line);
-		if (scalar(@cols) < $col_num) {
-			die "column number $col_num is greater than the number of columns in file '$file' (cols: ".scalar(@cols).", line: '$line')";
-		}
-		my $id = $cols[$col_num - 1];
-		push @ids, ;
+		next if $line !~ m{^(>\S+/\S+)};
+		my $id = $1;
+		push @ids, $id;
 	}
 	return @ids;
 }
 
-sub _read_query_ids_from_file {
-	state $check = compile( Path );
-	my ( $file ) = $check->( @ARG );
-	return _read_ids_from_column( $file, 1 );
-}
-
-sub _read_match_ids_from_file {
-	state $check = compile( Path );
-	my ( $file ) = $check->( @ARG );
-	return _read_ids_from_column( $file, 2 );
-}
 
 =head2 _embedding_scan_impl
 
@@ -224,7 +216,7 @@ sub _embedding_scan_impl {
 	for my $query_cluster_id ( @$query_cluster_ids ) {
 		# Set up @query_protids and get all the protein IDs from the query profile
 		my $query_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $query_cluster_id, $profile_build_type );
-		my @query_protids = _read_query_ids_from_file( $query_prof_file );
+		my @query_protids = _read_ids_from_profile_file( $query_prof_file );
 
 		if (!@query_protids) {
 			die "No protein IDs found in query profile file $query_prof_file";
@@ -232,7 +224,7 @@ sub _embedding_scan_impl {
 
 		for my $match_cluster_id ( @$match_cluster_ids ) {
 			my $match_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $match_cluster_id, $profile_build_type );
-			my @match_protids = _read_match_ids_from_file( $match_prof_file );
+			my @match_protids = _read_ids_from_profile_file( $match_prof_file );
 
 			if (!@match_protids) {
 				die "No protein IDs found in match profile file $match_prof_file";
@@ -268,11 +260,11 @@ sub _embedding_scan_impl {
 	for my $query_cluster_id ( @$query_cluster_ids ) {
 		# Set up @query_protids and get all the protein IDs from the query profile
 		my $query_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $query_cluster_id, $profile_build_type );
-		my @query_protids = _read_query_ids_from_file( $query_prof_file );
+		my @query_protids = _read_ids_from_profile_file( $query_prof_file );
 		for my $match_cluster_id ( @$match_cluster_ids ) {
 			my $match_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $match_cluster_id, $profile_build_type );
 			# open match profile file and get sequence ids
-			my @match_protids = _read_match_ids_from_file( $match_prof_file );
+			my @match_protids = _read_ids_from_profile_file( $match_prof_file );
 
 			my $dist_sum = 0;
 			my $dist_num = 0;
