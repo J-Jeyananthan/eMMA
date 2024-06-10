@@ -158,7 +158,44 @@ sub hhsuite_scan {
 	return $result;
 }
 
+=head2 _read_ids_from_column
 
+Function to extract the match/query id from file with the given column number
+
+Returns List of ids
+
+=cut
+
+sub _read_ids_from_column {
+	state $check = compile( Path, Int );
+	my ( $file, $col_num ) = $check->( @ARG );
+
+	my @ids;
+	open(my $fh, "<", $file)
+		or die "cannot open $file";
+	while (my $line = <$fh>) {
+		chomp($line);
+		my @cols = split(/\s+/, $line);
+		if (scalar(@cols) < $col_num) {
+			die "column number $col_num is greater than the number of columns in file '$file' (cols: ".scalar(@cols).", line: '$line')";
+		}
+		my $id = $cols[$col_num - 1];
+		push @ids, ;
+	}
+	return @ids;
+}
+
+sub _read_query_ids_from_file {
+	state $check = compile( Path );
+	my ( $file ) = $check->( @ARG );
+	return _read_ids_from_column( $file, 1 );
+}
+
+sub _read_match_ids_from_file {
+	state $check = compile( Path );
+	my ( $file ) = $check->( @ARG );
+	return _read_ids_from_column( $file, 2 );
+}
 
 =head2 _embedding_scan_impl
 
@@ -167,8 +204,8 @@ Function to get the scan files from embedding or other distance metric
 =cut
 
 sub _embedding_scan_impl {
-	state $check = compile( ClassName, Path, ArrayRef[Str], ArrayRef[Str], CathGemmaHHSuiteProfileType );
-	my ( $class, $profile_dir, $query_cluster_ids, $match_cluster_ids, $profile_build_type ) = $check->( @ARG );
+	state $check = compile( ClassName, Path, ArrayRef[Str], ArrayRef[Str], CathGemmaHHSuiteProfileType, Path );
+	my ( $class, $profile_dir, $query_cluster_ids, $match_cluster_ids, $profile_build_type, $embs_path ) = $check->( @ARG );
 
 	my $num_query_ids = scalar( @$query_cluster_ids );
 	my $num_match_ids = scalar( @$match_cluster_ids );
@@ -224,8 +261,8 @@ sub _embedding_scan_impl {
 	# search through file for any matches and store distance scores
 	my $dist_sum;
 	my $dist_num;
-	open (my $df, "<", "embs")
-		or die "cannot open embedding distance file";
+	open (my $df, "<", "$embs_path")
+		or die "cannot open embedding distance file: $embs_path";
 	while (my $dist_line = <$df>){
 		my ($query_id, $match_id, $dist) = split(' ', $dist_line);
 		if (exists $dist_scores_by_query_match{$query_id}{$match_id}) {
@@ -301,6 +338,7 @@ sub scan_to_file {
 
 	my $output_file = $gemma_dir_set->scan_filename_of_cluster_ids( $query_ids, $match_ids, $profile_build_type );
 
+	my $embs_path = $exes->embedding_db();
 
 	my $result = {};
 	my $file_already_present = ( -s $output_file ) ? 1 : 0;
@@ -326,6 +364,7 @@ sub scan_to_file {
 					$query_ids,
 					$match_ids,
 					$profile_build_type,
+					$embs_path,
 				);
 
 				$result->write_to_file( $tmp_scan_file );
