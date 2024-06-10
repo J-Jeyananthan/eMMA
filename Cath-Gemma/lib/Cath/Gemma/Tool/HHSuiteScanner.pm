@@ -180,8 +180,9 @@ sub _read_ids_from_profile_file {
 	my @ids;
 	open(my $fh, "<", $file)
 		or die "cannot open $file";
+
 	while (my $line = <$fh>) {
-		next if $line !~ m{^(>\S+/\S+)};
+		next if $line !~ m{^(>\S+)};
 		my $id = $1;
 		push @ids, $id;
 	}
