@@ -174,7 +174,7 @@ Returns list of ids
 =cut
 
 sub _read_ids_from_profile_file {
-	state $check = compile( Path, Int );
+	state $check = compile( Path );
 	my ( $file, $col_num ) = $check->( @ARG );
 
 	my @ids;
