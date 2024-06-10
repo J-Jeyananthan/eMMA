@@ -219,6 +219,7 @@ cd cath-funfhmmer/funfhmmer
 <your plenv cpanm> --installdeps . 
 ```
 
+Follow instructions in FunFHMMER-emma
 
 
 
