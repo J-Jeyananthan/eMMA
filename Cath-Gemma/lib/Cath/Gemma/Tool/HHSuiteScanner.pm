@@ -248,15 +248,19 @@ sub _embedding_scan_impl {
 
 
 	# search through file for any matches and store distance scores
-	my $dist_sum;
-	my $dist_num;
+	my $dist_sum = 0;
+	my $dist_num = 0;
 	open (my $df, "<", "$embs_path")
 		or die "cannot open embedding distance file: $embs_path";
 	while (my $dist_line = <$df>){
-		my ($query_id, $match_id, $dist) = split(' ', $dist_line);
+		chomp($dist_line);
+		my ($query_id, $match_id, $dist) = split(/\s+/, $dist_line);
 		if (exists $dist_scores_by_query_match{$query_id}{$match_id}) {
 			$dist_scores_by_query_match{$query_id}{$match_id} = $dist;
 			$dist_scores_by_query_match{$match_id}{$query_id} = $dist;
+		}
+		else {
+			die "Error: failed to find query '$query_id' or match '$match_id' profile files";
 		}
 	}
 
@@ -270,19 +274,23 @@ sub _embedding_scan_impl {
 			# open match profile file and get sequence ids
 			my @match_protids = _read_match_ids_from_file( $match_prof_file );
 
+			my $dist_sum = 0;
+			my $dist_num = 0;
+			for my $match_protid (@match_protids) {
+				for my $query_protid (@query_protids) {
+					$dist_sum += $dist_scores_by_query_match{$query_protid}{$match_protid};
+					$dist_num += 1
+				}
+			}
 
-				my $aver_dist = $dist_sum / $dist_num;
+			my $aver_dist = $dist_sum / $dist_num;
 
-
-
-
-				my @emb_line = ();
-				push( @emb_line, $query_cluster_id);
-				push( @emb_line, $match_cluster_id);
-				push( @emb_line, $aver_dist);
-				push( @embedding_diff_results, [ @emb_line ])
+			my @emb_line = ();
+			push( @emb_line, $query_cluster_id);
+			push( @emb_line, $match_cluster_id);
+			push( @emb_line, $aver_dist);
+			push( @embedding_diff_results, [ @emb_line ])
 		}
-
 	}
 
 	return Cath::Gemma::Scan::ScanData->new( scan_data => \@embedding_diff_results );
