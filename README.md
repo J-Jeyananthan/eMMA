@@ -17,6 +17,6 @@ The key change allows to use distances from pLM embeddings or structural distanc
 
 This repo is part of the FunFams pipeline as an intermediate step before FunFHMMER. 
 
-The eMMA version of FunFHMMER can be found at [funfhmmer-emma](https://github.com/UCL/cath-funfhmmer/tree/funfhmmer-emma)
+The eMMA version of FunFHMMER can be found at [funfhmmer-emma]([https://github.com/UCL/cath-funfhmmer/tree/funfhmmer-emma](https://github.com/UCLOrengoGroup/eMMA-FunFHMMER))
 
 See the GeMMA [Wiki](https://github.com/UCL/cath-gemma/wiki) for documentation on GEMMA and check out the step-by-step walkthrough [here](https://github.com/UCLOrengoGroup/eMMA/blob/main/step-by-step-walkthrough.md)
