@@ -248,16 +248,8 @@ sub _embedding_scan_impl {
 	while (my $dist_line = <$df>){
 		chomp($dist_line);
 		my ($query_id, $match_id, $dist) = split(/\s+/, $dist_line);
-		next if $query_id eq $match_id;
-		if (!exists $dist_scores_by_query_match{$query_id}) {
-			my @qkeys = keys %dist_scores_by_query_match;
-			warn "Warning: failed to find query '$query_id' in matrix of profile ids (eg: query_id='$qkeys[0]'...)"
-		}
-		elsif (!exists $dist_scores_by_query_match{$query_id}{$match_id}) {
-			my @mkeys = keys %{$dist_scores_by_query_match{$query_id}};
-			warn "Warning: failed to find query '$query_id' / match '$match_id' in matrix of profile ids (eg: match_id='$mkeys[0]'...)"
-		}
-		else {
+		# ignore any distances that are not in the query and match list
+		if (exists $dist_scores_by_query_match{$query_id}{$match_id}) {
 			$dist_scores_by_query_match{$query_id}{$match_id} = $dist;
 			$dist_scores_by_query_match{$match_id}{$query_id} = $dist;
 		}
