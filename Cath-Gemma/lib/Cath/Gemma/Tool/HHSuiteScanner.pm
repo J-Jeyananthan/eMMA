@@ -249,7 +249,7 @@ sub _embedding_scan_impl {
 		chomp($dist_line);
 		my ($query_id, $match_id, $dist) = split(/\s+/, $dist_line);
 		if (!exists $dist_scores_by_query_match{$query_id}) {
-			my @qkeys = keys %$dist_scores_by_query_match;
+			my @qkeys = keys %dist_scores_by_query_match;
 			die "Error: failed to find query '$query_id' in matrix of profile ids (eg: query_id='$qkeys[0]'...)"
 		}
 		elsif (!exists $dist_scores_by_query_match{$query_id}{$match_id}) {
