@@ -224,36 +224,25 @@ sub _embedding_scan_impl {
 	for my $query_cluster_id ( @$query_cluster_ids ) {
 		# Set up @query_protids and get all the protein IDs from the query profile
 		my $query_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $query_cluster_id, $profile_build_type );
-		my @query_protids;
-		my $delim="/";
-		open(my $fh, "<", $query_prof_file)
-			or die "cannot open $query_prof_file";
-		while (my $line = <$fh>) {
-			if ($line =~ m/$delim/) {
-				$line =~ s/\s*$//;
-				push(@query_protids, $line);
-			}
+		my @query_protids = _read_query_ids_from_file( $query_prof_file );
+
+		if (!@query_protids) {
+			die "No protein IDs found in query profile file $query_prof_file";
 		}
-	for my $match_cluster_id ( @$match_cluster_ids ) {
+
+		for my $match_cluster_id ( @$match_cluster_ids ) {
 			my $match_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $match_cluster_id, $profile_build_type );
-			my @match_protids;
-			my $delim="/";
-			open(my $fh, "<", $match_prof_file)
-				or die "cannot open $match_prof_file";
-			while (my $line = <$fh>) {
-				if ($line =~ m/$delim/) {
-					$line =~ s/\s*$//;
-					push(@match_protids, $line);
+			my @match_protids = _read_match_ids_from_file( $match_prof_file );
+
+			if (!@match_protids) {
+				die "No protein IDs found in match profile file $match_prof_file";
+			}
+			for my $match_protid (@match_protids) {
+				for my $query_protid (@query_protids) {
+					$dist_scores_by_query_match{$match_protid}{$query_protid} = undef;
+					$dist_scores_by_query_match{$query_protid}{$match_protid} = undef;
 				}
 			}
-
-			for my $match_protid (@match_protids) {
-			    for my $query_protid (@query_protids) {
-				$dist_scores_by_query_match{$match_protid}{$query_protid} = undef;
-				$dist_scores_by_query_match{$query_protid}{$match_protid} = undef;
-			    }
-			}
-
 		}
 	}
 
@@ -275,38 +264,11 @@ sub _embedding_scan_impl {
 	for my $query_cluster_id ( @$query_cluster_ids ) {
 		# Set up @query_protids and get all the protein IDs from the query profile
 		my $query_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $query_cluster_id, $profile_build_type );
-		my @query_protids;
-		my $delim="/";
-		open(my $fh, "<", $query_prof_file)
-			or die "cannot open $query_prof_file";
-		while (my $line = <$fh>) {
-			if ($line =~ m/$delim/) {
-				$line =~ s/\s*$//;
-				push(@query_protids, $line);
-			}
-		}
+		my @query_protids = _read_query_ids_from_file( $query_prof_file );
 		for my $match_cluster_id ( @$match_cluster_ids ) {
-				my $match_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $match_cluster_id, $profile_build_type );
-				# open match profile file and get sequence ids
-				my @match_protids;
-				my $delim="/";
-				open(my $fh, "<", $match_prof_file)
-					or die "cannot open $match_prof_file";
-				while (my $line = <$fh>) {
-					if ($line =~ m/$delim/) {
-						$line =~ s/\s*$//;
-						push(@match_protids, $line);
-					}
-				}
-
-				my $dist_sum;
-				my $dist_num;
-				for my $match_protid (@match_protids) {
-						for my $query_protid (@query_protids) {
-							$dist_sum += $dist_scores_by_query_match{$query_protid}{$match_protid};
-							$dist_num += 1
-						}
-				}
+			my $match_prof_file = prof_file_of_prof_dir_and_cluster_id( $profile_dir, $match_cluster_id, $profile_build_type );
+			# open match profile file and get sequence ids
+			my @match_protids = _read_match_ids_from_file( $match_prof_file );
 
 
 				my $aver_dist = $dist_sum / $dist_num;
