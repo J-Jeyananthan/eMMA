@@ -12,7 +12,11 @@ module purge
 module load python/3.8.5
 
 cd /SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data
-source venv_emma/bin/activate
+source /SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data/venv_emma/bin/activate
+
+# sanity (optional but helpful)
+python --version
+python -c "import cath_emma; print('cath_emma:', cath_emma.__file__)"
 
 cath-emma-cli create-distance-matrix \
   --distance_source embeddings \
