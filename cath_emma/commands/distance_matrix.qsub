@@ -1,0 +1,20 @@
+#!/bin/bash
+#$ -S /bin/bash
+#$ -cwd
+#$ -N dist_cosine
+#$ -l tmem=26G
+#$ -l h_rt=24:00:00
+#$ -j y
+
+module purge
+module load python/3.8.5
+
+cd /SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data
+source venv_emma/bin/activate
+
+cath-emma-cli create-distance-matrix \
+  --distance_source embeddings \
+  --input_to_process my_embedded.pt \
+  --embedding_distance cosine \
+  --matrix_output_file embedding_matrix_new_cosine.ssv \
+  --labels_file reps_ids.txt
