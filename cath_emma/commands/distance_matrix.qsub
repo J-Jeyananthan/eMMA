@@ -2,10 +2,10 @@
 #$ -S /bin/bash
 #$ -cwd
 #$ -N dist_baseline_euclidean
-#$ -l tmem=26G
-#$ -l h_rt=12:00:00
+#$ -l tmem=8G
+#$ -l h_rt=06:00:00
 #$ -l gpu=true
-#$ -l h=bubba-213-1
+#$ -l h=bubba-213-3
 #$ -j y
 
 module purge
