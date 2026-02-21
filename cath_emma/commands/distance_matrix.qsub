@@ -5,7 +5,7 @@
 #$ -l tmem=8G
 #$ -l h_rt=06:00:00
 #$ -l gpu=true
-#$ -l h=bubba-213-3
+#$ -l h=bubba-213-1
 #$ -j y
 
 module purge
