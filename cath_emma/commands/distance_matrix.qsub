@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-#$ -N dist_cosine
+#$ -N dist_baseline_euclidean
 #$ -l tmem=26G
 #$ -l h_rt=12:00:00
 #$ -l gpu=true
@@ -20,7 +20,7 @@ python -c "import cath_emma; print('cath_emma:', cath_emma.__file__)"
 
 cath-emma-cli create-distance-matrix \
   --distance_source embeddings \
-  --input_to_process my_embedded.pt \
-  --embedding_distance cosine \
-  --matrix_output_file embedding_matrix_new_cosine.ssv \
+  --input_to_process 3.40.50.620_embedded.pt \
+  --embedding_distance euclidean \
+  --matrix_output_file baseline_esm2_embedding_matrix.ssv \
   --labels_file reps_ids.txt
