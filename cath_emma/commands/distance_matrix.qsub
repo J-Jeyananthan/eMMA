@@ -5,7 +5,7 @@
 #$ -l tmem=8G
 #$ -l h_rt=06:00:00
 #$ -l gpu=true
-#$ -l h=bubba-213-3
+#$ -l h=bubba-213-1
 #$ -j y
 
 module purge
@@ -23,4 +23,4 @@ cath-emma-cli create-distance-matrix \
   --input_to_process 3.40.50.620_embedded.pt \
   --embedding_distance euclidean \
   --matrix_output_file baseline_esm2_embedding_matrix.ssv \
-  --labels_file reps_ids.txt
+  --labels_file starting_ids_from_pt.txt
