@@ -6,9 +6,7 @@
 #$ -N emma-dist-matrix
 #$ -cwd
 #$ -P cath
-#$ -e /dev/null
-#$ -o /dev/null
-#$ -t 1-4
+#$ -t 3-4
 
 DATADIR=/SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data/3.20.20.70
 PARENTDIR=/SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data
@@ -25,18 +23,21 @@ EMB_FILES=(
     "${DATADIR}/esm2_contrastive_deduped/E_starting_contrastive.pt"
     "${DATADIR}/prostt5_contrastive/E_starting_contrastive.pt"
 )
+DISTANCES=(euclidean euclidean cosine cosine)
 
 IDX=$((SGE_TASK_ID - 1))
 PROJECT=${PROJECTS[$IDX]}
 EMB_FILE=${EMB_FILES[$IDX]}
+DISTANCE=${DISTANCES[$IDX]}
 
 echo $(date) ${PROJECT} START
 
 cath-emma-cli create-distance-matrix \
     --distance_source embeddings \
     --input_to_process ${EMB_FILE} \
-    --embedding_distance euclidean \
+    --embedding_distance ${DISTANCE} \
     --matrix_output_file ${EMMA_EXP}/${PROJECT}/${PROJECT}_embedding_matrix.ssv \
-    --labels_file ${DATADIR}/3.20.20.70_sc_reps_ids_list
+    --labels_file ${DATADIR}/3.20.20.70_sc_reps_ids_list \
+    1> ${EMMA_EXP}/${PROJECT}/${PROJECT}_distance_matrix.log 2>&1
 
 echo $(date) ${PROJECT} END
