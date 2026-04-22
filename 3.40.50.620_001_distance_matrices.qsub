@@ -1,0 +1,39 @@
+#!/bin/bash
+#$ -l tmem=32G
+#$ -l h_rt=12:0:0
+#$ -S /bin/bash
+#$ -j y
+#$ -N emma-dist-matrix
+#$ -cwd
+#$ -P cath
+#$ -t 1-2
+
+DATADIR=/SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data/HUPs_mmseqs_s90_3.40.50.620
+PARENTDIR=/SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data
+EMMA_EXP=${DATADIR}/eMMA_experiments
+VENV=${PARENTDIR}/venv_emma/bin/activate
+
+module load python/3.8.5
+source ${VENV}
+
+PROJECTS=(esm2_contrastive prostt5_contrastive)
+EMB_FILES=(
+    "${DATADIR}/experiments/esm2_contrastive_deduped/E_starting_contrastive.pt"
+    "${DATADIR}/experiments/prostt5_contrastive_deduped/E_starting_contrastive.pt"
+)
+
+IDX=$((SGE_TASK_ID - 1))
+PROJECT=${PROJECTS[$IDX]}
+EMB_FILE=${EMB_FILES[$IDX]}
+
+echo $(date) ${PROJECT} START
+
+cath-emma-cli create-distance-matrix \
+    --distance_source embeddings \
+    --input_to_process ${EMB_FILE} \
+    --embedding_distance cosine \
+    --matrix_output_file ${EMMA_EXP}/${PROJECT}/${PROJECT}_embedding_matrix.ssv \
+    --labels_file ${DATADIR}/HUPs_mmseqs_s90_3.40.50.620_reps_ids.txt \
+    1> ${EMMA_EXP}/${PROJECT}/${PROJECT}_distance_matrix.log 2>&1
+
+echo $(date) ${PROJECT} END
