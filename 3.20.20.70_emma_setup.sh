@@ -6,6 +6,7 @@ PARENTDIR=/SAN/orengolab/functional-families/janu/contrasted-ff/HUPs_data
 EMMA_EXP=${DATADIR}/eMMA_experiments
 VENV=${PARENTDIR}/venv_emma/bin/activate
 
+module load python/3.8.5
 source ${VENV}
 
 # Create experiment directories
