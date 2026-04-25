@@ -1,7 +1,7 @@
 #!/bin/bash
 # Usage: bash filter_ec_file.sh <funfams_dir> <ec_file> <output_ec_file>
 
-IDS=$(grep -h "^>" "$1"/*.faa "$1"/*.aln 2>/dev/null | sed 's/>//; s/\/.*//')
+IDS=$(find "$1" \( -name "*.faa" -o -name "*.aln" \) | xargs grep -h "^>" | sed 's/>//; s/\/.*//')
 
 DUPES=$(echo "$IDS" | sort | uniq -d | wc -l)
 echo "Duplicate IDs: $DUPES"
