@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import StringIO
 
 import click
@@ -12,10 +13,12 @@ logging.basicConfig(
 )
 LOG = logging.getLogger(__name__)
 
-# Mirrors Funfhmmer::Align::align (cath-funfhmmer)
-MAFFT_PARAMS_HIGH_QUAL = ["--anysymbol", "--amino", "--quiet", "--localpair", "--maxiterate", "1000"]
-MAFFT_PARAMS_MID_QUAL = ["--anysymbol", "--amino", "--quiet", "--maxiterate", "2"]
-MAFFT_PARAMS_LOW_QUAL = ["--anysymbol", "--amino", "--quiet", "--retree", "1"]
+# Mirrors Funfhmmer::Align::align (cath-funfhmmer), pinned to a single thread
+# per mafft call so that --jobs can run many of these concurrently without
+# every process trying to grab every core.
+MAFFT_PARAMS_HIGH_QUAL = ["--anysymbol", "--amino", "--quiet", "--localpair", "--maxiterate", "1000", "--thread", "1"]
+MAFFT_PARAMS_MID_QUAL = ["--anysymbol", "--amino", "--quiet", "--maxiterate", "2", "--thread", "1"]
+MAFFT_PARAMS_LOW_QUAL = ["--anysymbol", "--amino", "--quiet", "--retree", "1", "--thread", "1"]
 HIGH_QUAL_MAX_SEQUENCES = 500
 MID_QUAL_MAX_SEQUENCES = 2000
 
@@ -97,7 +100,14 @@ def align_fasta_file(fasta_path, aln_path, mafft_exe):
     default="mafft",
     help="Path to the mafft executable (default: mafft on PATH)",
 )
-def fasta_dir_to_aln(input_dir, output_dir, fasta_suffix, mafft_exe):
+@click.option(
+    "--jobs",
+    "-j",
+    default=1,
+    type=int,
+    help="Number of mafft alignments to run concurrently (default: 1)",
+)
+def fasta_dir_to_aln(input_dir, output_dir, fasta_suffix, mafft_exe, jobs):
     """Align each FASTA file in INPUT_DIR with mafft, using the same protocol
     as Funfhmmer::Align::align, writing .aln files to OUTPUT_DIR"""
     os.makedirs(output_dir, exist_ok=True)
@@ -107,6 +117,7 @@ def fasta_dir_to_aln(input_dir, output_dir, fasta_suffix, mafft_exe):
         LOG.warning(f"No *.{fasta_suffix} files found in {input_dir}")
         return
 
+    todo = []
     for fasta_file in fasta_files:
         fasta_path = os.path.join(input_dir, fasta_file)
         basename = os.path.splitext(fasta_file)[0]
@@ -116,7 +127,19 @@ def fasta_dir_to_aln(input_dir, output_dir, fasta_suffix, mafft_exe):
             LOG.info(f"Skipping {fasta_file}: {aln_path} already exists")
             continue
 
-        align_fasta_file(fasta_path, aln_path, mafft_exe)
+        todo.append((fasta_path, aln_path))
+
+    if jobs <= 1:
+        for fasta_path, aln_path in todo:
+            align_fasta_file(fasta_path, aln_path, mafft_exe)
+    else:
+        with ThreadPoolExecutor(max_workers=jobs) as executor:
+            futures = {
+                executor.submit(align_fasta_file, fasta_path, aln_path, mafft_exe): fasta_path
+                for fasta_path, aln_path in todo
+            }
+            for future in as_completed(futures):
+                future.result()
 
     LOG.info("DONE.")
 
