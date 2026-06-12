@@ -12,10 +12,12 @@ logging.basicConfig(
 )
 LOG = logging.getLogger(__name__)
 
-# Mirrors Cath::Gemma::Tool::Aligner::make_alignment_file
-MAFFT_PARAMS_SLOW_HIGH_QUAL = ["--amino", "--anysymbol", "--localpair", "--maxiterate", "1000", "--quiet"]
-MAFFT_PARAMS_FAST_LOW_QUAL = ["--amino", "--anysymbol", "--parttree", "--retree", "1", "--quiet"]
-MANY_SEQUENCES_THRESHOLD = 200
+# Mirrors Funfhmmer::Align::align (cath-funfhmmer)
+MAFFT_PARAMS_HIGH_QUAL = ["--anysymbol", "--amino", "--quiet", "--localpair", "--maxiterate", "1000"]
+MAFFT_PARAMS_MID_QUAL = ["--anysymbol", "--amino", "--quiet", "--maxiterate", "2"]
+MAFFT_PARAMS_LOW_QUAL = ["--anysymbol", "--amino", "--quiet", "--retree", "1"]
+HIGH_QUAL_MAX_SEQUENCES = 500
+MID_QUAL_MAX_SEQUENCES = 2000
 
 
 def write_flattened_fasta(records, out_path):
@@ -38,11 +40,12 @@ def align_fasta_file(fasta_path, aln_path, mafft_exe):
         shutil.copy(fasta_path, aln_path)
         return
 
-    mafft_params = (
-        MAFFT_PARAMS_SLOW_HIGH_QUAL
-        if num_sequences <= MANY_SEQUENCES_THRESHOLD
-        else MAFFT_PARAMS_FAST_LOW_QUAL
-    )
+    if num_sequences <= HIGH_QUAL_MAX_SEQUENCES:
+        mafft_params = MAFFT_PARAMS_HIGH_QUAL
+    elif num_sequences <= MID_QUAL_MAX_SEQUENCES:
+        mafft_params = MAFFT_PARAMS_MID_QUAL
+    else:
+        mafft_params = MAFFT_PARAMS_LOW_QUAL
 
     command = [mafft_exe, *mafft_params, str(fasta_path)]
     LOG.info(f"About to mafft-align {num_sequences} sequences for {fasta_path}")
@@ -58,8 +61,7 @@ def align_fasta_file(fasta_path, aln_path, mafft_exe):
     if result.stderr:
         LOG.warning(f"mafft produced stderr output for {fasta_path}:\n{result.stderr}")
 
-    # Flatten the alignment to single-line-per-sequence FASTA, as done with
-    # Bio::SeqIO (-width => 32000) in Aligner.pm
+    # Flatten the alignment to single-line-per-sequence FASTA
     aligned_records = list(SeqIO.parse(StringIO(result.stdout), "fasta"))
     write_flattened_fasta(aligned_records, aln_path)
 
@@ -97,7 +99,7 @@ def align_fasta_file(fasta_path, aln_path, mafft_exe):
 )
 def fasta_dir_to_aln(input_dir, output_dir, fasta_suffix, mafft_exe):
     """Align each FASTA file in INPUT_DIR with mafft, using the same protocol
-    as Cath::Gemma::Tool::Aligner::make_alignment_file, writing .aln files to OUTPUT_DIR"""
+    as Funfhmmer::Align::align, writing .aln files to OUTPUT_DIR"""
     os.makedirs(output_dir, exist_ok=True)
 
     fasta_files = sorted(f for f in os.listdir(input_dir) if f.endswith(f".{fasta_suffix}"))
